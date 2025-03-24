@@ -1,0 +1,204 @@
+/* Custom styles beyond Bootstrap */
+
+body {
+    font-family: 'Arial', sans-serif;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.navbar {
+    padding: 0.75rem 1rem;
+}
+
+.navbar-expand-lg .navbar-nav {
+    align-items: center;
+}
+
+.hero-section {
+    padding: 4rem 0;
+    background-color: #f8f9fa;
+}
+
+.feature-card {
+    transition: transform 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Form styles for search page */
+.search-form {
+    background-color: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Results page styling */
+.result-card {
+    margin-bottom: 1rem;
+    border-left: 4px solid #0d6efd;
+    padding: 1.25rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    
+    
+}
+.flight-details {
+    max-width: 100%;  /* Changed from 600px to allow more space */
+    margin: 0 auto;
+}
+
+.flight-details .d-flex {
+    justify-content: space-between;
+    padding: 0 15px;
+}
+
+.flight-duration {
+    font-weight: bold;
+    color: #0d6efd;
+    margin: 0 30px;  /* Add horizontal margin to create more space */
+    min-width: 80px;  /* Ensure minimum width for the duration display */
+    text-align: center;
+}
+
+/* Add more space around the horizontal line */
+.flight-details hr {
+    margin: 10px 0;
+}
+
+/* Search summary card styling */
+.search-summary {
+    max-width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.search-summary .card-header {
+    padding: 1rem;
+    background-color: #0d6efd;
+    color: white;
+    border-bottom: none;
+}
+
+.search-summary .card-body {
+    padding: 1.5rem;
+}
+
+/* Currency selector styles */
+.currency-selector {
+    max-width: 200px;
+}
+
+/* Profile page styling */
+.profile-card {
+    border: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-body{
+    margin-right: 50px;
+}
+.card.mb-3{
+    margin-right: 45px;
+}
+.flight-results{
+    margin-right: 140px;
+}
+/* Filter panel styles */
+.filter-panel {
+    position: sticky;
+    top: 20px;
+    margin-bottom: 20px;
+    margin-left: 45px;
+}
+
+.sort-btn.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.airline-logo {
+    max-height: 40px;
+    width: auto;
+}
+
+#airline-filters {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.flight-duration {
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+/* Container width adjustments */
+.container {
+    width: 85%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Flight details constraints */
+.flight-details {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    
+    .filter-panel {
+        position: static;
+        margin-bottom: 20px;
+    }
+    
+    .sort-btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .search-summary {
+        max-width: 100%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .container {
+        width: 80%;
+        max-width: 1300px;
+    }
+}
+
+@media (min-width: 1600px) {
+    .container {
+        width: 70%;
+    }
+    
+    .result-card {
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    body {
+        font-size: 18px;
+    }
+    
+    h1 {
+        font-size: 2.5rem;
+    }
+}

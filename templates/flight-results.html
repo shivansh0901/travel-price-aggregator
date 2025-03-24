@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Results - Travel Price Aggregator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">Travel Price Aggregator</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/search">Search</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Attractions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-summary card p-3 mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Your Trip Details</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-plane-departure mr-2" style="font-size: 1.5rem; color: #0d6efd;"></i>
+                        <div>
+                            <p class="mb-0"><strong>From:</strong> {{ origin }}</p>
+                            {% for airport in flight_data.airports[0].departure %}
+                                <p class="text-muted mb-0">{{ airport.airport.name }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-plane-arrival mr-2" style="font-size: 1.5rem; color: #0d6efd;"></i>
+                        <div>
+                            <p class="mb-0"><strong>To:</strong> {{ destination }}</p>
+                            {% for airport in flight_data.airports[0].arrival %}
+                                <p class="text-muted mb-0">{{ airport.airport.name }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="far fa-calendar-alt mr-2" style="font-size: 1.5rem; color: #0d6efd;"></i>
+                        <div>
+                            <p class="mb-0"><strong>Departure:</strong> {{ outbound_date }}</p>
+                        </div>
+                    </div>
+                    {% if return_date %}
+                    <div class="d-flex align-items-center">
+                        <i class="far fa-calendar-check mr-2" style="font-size: 1.5rem; color: #0d6efd;"></i>
+                        <div>
+                            <p class="mb-0"><strong>Return:</strong> {{ return_date }}</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle mr-2" style="font-size: 1.5rem; color: #0d6efd;"></i>
+                        <div>
+                            <p class="mb-0"><strong>Trip Type:</strong> One Way</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <a href="/search" class="btn btn-outline-primary">
+                    <i class="fas fa-edit mr-1"></i> Modify Search
+                </a>
+            </div>
+        </div>
+    </div>
+    
+
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% elif flights|length == 0 %}
+        <div class="alert alert-warning">
+            We couldn't find any flights matching your criteria. Please try adjusting your search parameters.
+        </div>
+        {% else %}
+        
+        <div class="row">
+            <!-- Filter Panel -->
+            <div class="col-md-3">
+                <div class="card filter-panel">
+                    <div class="card-header">
+                        <h5>Filter Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="filter-form">
+                            <div class="form-group">
+                                <label><strong>Price Range</strong></label>
+                                <div class="d-flex justify-content-between">
+                                    <span id="min-price-display">0</span>
+                                    <span id="max-price-display">5000</span>
+                                </div>
+                                <input type="range" class="custom-range" id="price-range" min="0" max="5000" step="50">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><strong>Stops</strong></label>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input stop-filter" id="direct-flights" value="0" checked>
+                                    <label class="custom-control-label" for="direct-flights">Direct Flights</label>
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input stop-filter" id="one-stop" value="1" checked>
+                                    <label class="custom-control-label" for="one-stop">1 Stop</label>
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input stop-filter" id="two-plus-stops" value="2" checked>
+                                    <label class="custom-control-label" for="two-plus-stops">2+ Stops</label>
+                                </div>
+                            </div>
+                            
+                            
+                            
+                            <button type="button" id="reset-filters" class="btn btn-outline-secondary btn-sm mt-3">Reset Filters</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Column -->
+            <div class="col-md-9">
+                <!-- Sorting Options -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="mr-2"><strong>Sort by:</strong></span>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-primary sort-btn active" data-sort="price">Price</button>
+                                    <button type="button" class="btn btn-outline-primary sort-btn" data-sort="duration">Duration</button>
+                                    <button type="button" class="btn btn-outline-primary sort-btn" data-sort="departure">Departure</button>
+                                    <button type="button" class="btn btn-outline-primary sort-btn" data-sort="arrival">Arrival</button>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="mr-2">{{ flights|length }} flights found</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Flight Results -->
+                <div class="flight-results" id="flight-results-container">
+                    {% for flight in flights %}
+                    <div class="result-card card p-3 mb-3 flight-item" 
+                         data-price="{{ flight.price|replace('$', '')|replace('€', '')|replace('£', '')|replace('¥', '')|replace('₹', '')|float }}"
+                         data-duration="{{ flight.duration }}"
+                         data-departure="{{ flight.departure_time }}"
+                         data-arrival="{{ flight.arrival_time }}"
+                         data-airline="{{ flight.airline }}"
+                         data-stops="{{ flight.stops }}">
+                        <div class="row">
+                            <div class="col-md-3">
+                                {% if flight.airline_logo %}
+                                <img src="{{ flight.airline_logo }}" alt="{{ flight.airline }} logo" class="airline-logo mb-2" style="height: 40px;">
+                                {% endif %}
+                                <h4>{{ flight.airline }}</h4>
+                                <p class="text-muted">{{ flight.airplane }}</p>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="flight-details">
+                                    <div class="d-flex justify-content-between">
+                                        <div class="text-center">
+                                            <h5>{{ flight.departure_airport }}</h5>
+                                            <p class="small text-muted">{{ flight.departure_airport_name }}</p>
+                                            <p>{{ flight.departure_time }}</p>
+                                        </div>
+                                        <div class="text-center my-auto">
+                                            <p class="flight-duration">{{ flight.duration // 60 }}h {{ flight.duration % 60 }}m</p>
+                                            <hr>
+                                            <p class="small">
+                                                {% if flight.stops == 0 %}
+                                                    Direct Flight
+                                                {% elif flight.stops == 1 %}
+                                                    1 stop
+                                                {% else %}
+                                                    {{ flight.stops }} stops
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="text-center">
+                                            <h5>{{ flight.arrival_airport }}</h5>
+                                            <p class="small text-muted">{{ flight.arrival_airport_name }}</p>
+                                            <p>{{ flight.arrival_time }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if flight.layovers %}
+                                <div class="layover-info mt-2">
+                                    <p class="small">Layovers:</p>
+                                    <ul class="list-unstyled">
+                                        {% for layover in flight.layovers %}
+                                        <li class="small">{{ layover.duration }} min at {{ layover.name }} ({{ layover.id }})</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <h3 class="text-primary">{{ flight.price }}</h3>
+                                <p class="small">{{ flight.travel_class }}</p>
+                                <a href="{{ flight.booking_link }}" target="_blank" class="btn btn-primary mt-2">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+    $(document).ready(function() {
+    // Find min and max prices from all flights
+    let minPrice = Number.MAX_VALUE;
+    let maxPrice = 0;
+    
+    $('.flight-item').each(function() {
+        const price = $(this).data('price');
+        minPrice = Math.min(minPrice, price);
+        maxPrice = Math.max(maxPrice, price);
+    });
+    
+    // Round values for better UX
+    minPrice = Math.floor(minPrice);
+    maxPrice = Math.ceil(maxPrice);
+    
+    // Set slider attributes
+    $('#price-range').attr('min', minPrice);
+    $('#price-range').attr('max', maxPrice);
+    $('#price-range').val(maxPrice);
+    
+    // Update display
+    $('#min-price-display').text(minPrice);
+    $('#max-price-display').text(maxPrice);
+    
+    // Initial sort and filter
+    sortResults('price');
+    applyFilters();
+    
+    // Sorting functionality
+    $('.sort-btn').click(function() {
+        $('.sort-btn').removeClass('active');
+        $(this).addClass('active');
+        sortResults($(this).data('sort'));
+    });
+    
+    // Filter functionality
+    $('#price-range, .stop-filter').on('change', function() {
+        applyFilters();
+    });
+    
+    // Reset filters
+    $('#reset-filters').click(function() {
+        // Reset price range
+        $('#price-range').val(maxPrice);
+        $('#min-price-display').text('$' + minPrice);
+        $('#max-price-display').text('$' + maxPrice);
+        
+        // Reset checkboxes
+        $('.stop-filter').prop('checked', true);
+        
+        // Apply filters
+        applyFilters();
+    });
+    
+    // Update price range display
+    $('#price-range').on('input', function() {
+        $('#max-price-display').text('$' + $(this).val());
+    });
+    
+    // Function to sort results
+    function sortResults(sortBy) {
+        let $flightItems = $('.flight-item').detach();
+        
+        $flightItems.sort(function(a, b) {
+            let aVal = $(a).data(sortBy);
+            let bVal = $(b).data(sortBy);
+            
+            if (sortBy === 'price' || sortBy === 'duration') {
+                return aVal - bVal;
+            } else {
+                return aVal.localeCompare(bVal);
+            }
+        });
+        
+        $('#flight-results-container').append($flightItems);
+    }
+    
+    // Function to apply filters
+    function applyFilters() {
+        // Get filter values
+        const maxPrice = $('#price-range').val();
+        const selectedStops = $('.stop-filter:checked').map(function() {
+            return parseInt($(this).val());
+        }).get();
+        
+        // Filter flights
+        $('.flight-item').each(function() {
+            const price = $(this).data('price');
+            const stops = $(this).data('stops');
+            
+            const priceMatch = price <= maxPrice;
+            const stopsMatch = selectedStops.includes(stops) || (stops >= 2 && selectedStops.includes(2));
+            
+            if (priceMatch && stopsMatch) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        // Update flight count
+        const visibleFlights = $('.flight-item:visible').length;
+        $('.sort-btn').parent().parent().next().find('span').text(visibleFlights + ' flights found');
+    }
+});
+
+    </script>
+</body>
+</html>
