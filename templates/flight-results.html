@@ -144,6 +144,22 @@
                         </form>
                     </div>
                 </div>
+                <!-- Tourist Attractions Panel -->
+                <div class="card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Tourist Attractions in {{ destination }}</h5>
+                    </div>
+                    <div class="card-body" id="attractions-container">
+                        <div class="text-center" id="attractions-loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading attractions...</p>
+                        </div>
+                        <div id="attractions-content" style="display: none;"></div>
+                    </div>
+                </div>
+
             </div>
             
             <!-- Results Column -->
@@ -348,6 +364,61 @@
         const visibleFlights = $('.flight-item:visible').length;
         $('.sort-btn').parent().parent().next().find('span').text(visibleFlights + ' flights found');
     }
+});
+
+    </script>
+    <script>
+        // Define variables for the script to use
+        var destinationVar = "{{ destination|default('') }}";
+        var cityVar = "{{ city|default('') }}";
+        $(document).ready(function() {
+    // Get destination name - use a safer approach to get the destination
+    let destination = '';
+    
+    // Check if destination or city is defined in the page
+    if (typeof destinationVar !== 'undefined') {
+        destination = destinationVar;
+    } else if (typeof cityVar !== 'undefined') {
+        destination = cityVar;
+    } else {
+        // Fallback to getting it from the page content
+        destination = $('.search-summary h4').text().split(':')[1] || 'Paris';
+    }
+    
+    // Fetch tourist attractions
+    $.ajax({
+        url: '/tourist_suggestions',
+        data: { destination: destination.trim() },
+        success: function(response) {
+            // Hide loading spinner
+            $('#attractions-loading').hide();
+            
+            // Parse the OpenAI response
+            let attractionsText = '';
+            if (response.choices && response.choices.length > 0) {
+                attractionsText = response.choices[0].text;
+            } else {
+                attractionsText = "Couldn't load attractions. Please try again later.";
+            }
+            
+            // Format the attractions text
+            const formattedText = attractionsText.split('\n').map(line => {
+                // Check if line is a numbered item
+                if (/^\d+\./.test(line)) {
+                    return `<p><strong>${line.trim()}</strong></p>`;
+                } else {
+                    return `<p>${line.trim()}</p>`;
+                }
+            }).join('');
+            
+            // Display the attractions
+            $('#attractions-content').html(formattedText).show();
+        },
+        error: function() {
+            $('#attractions-loading').hide();
+            $('#attractions-content').html('<p class="text-danger">Failed to load attractions. Please try again later.</p>').show();
+        }
+    });
 });
 
     </script>

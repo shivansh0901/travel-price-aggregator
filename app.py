@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import requests
-from config import SERPAPI_KEY, AMADEUS_API_KEY, OPENAI_API_KEY
+from config import SERPAPI_KEY, OPENAI_API_KEY, GEMINI_API_KEY
 import time
 from datetime import datetime
 
@@ -384,19 +384,36 @@ def search_hotels():
 @app.route('/tourist_suggestions', methods=['GET'])
 def tourist_suggestions():
     destination = request.args.get('destination')
-    prompt = f"Suggest top 5 tourist attractions in {destination} with short descriptions."
+    prompt = f"List 5 popular tourist attractions in {destination} with a brief description for each."
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
     
     try:
         response = requests.post(
-            "https://api.openai.com/v1/completions",
-            json={"model": "text-davinci-003", "prompt": prompt, "max_tokens": 100},
+            "https://api.openai.com/v1/chat/completions",  # Updated endpoint
+            json={
+                "model": "gpt-3.5-turbo",  # Updated model
+                "messages": [
+                    {"role": "system", "content": "You are a helpful travel guide."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.7
+            },
             headers=headers
         )
+        response.raise_for_status()
+        result = response.json()
+        print(f"OpenAI API response: {result}")  # For debugging
         
-        return jsonify(response.json())
+        if 'choices' in result and len(result['choices']) > 0:
+            return jsonify({"attractions": result['choices'][0]['message']['content'].strip()})
+        else:
+            return jsonify({"error": "No suggestions found"}), 404
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error calling OpenAI API: {str(e)}")  # For debugging
+        return jsonify({"error": "Failed to get suggestions. Please try again later."}), 500
+
+
+
 
 # Home Route
 @app.route('/')

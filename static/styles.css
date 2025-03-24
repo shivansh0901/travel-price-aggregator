@@ -202,3 +202,18 @@ body {
         font-size: 2.5rem;
     }
 }
+
+/* Tourist attractions panel styling */
+#attractions-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#attractions-content p {
+    margin-bottom: 0.5rem;
+}
+
+#attractions-content p strong {
+    color: #0d6efd;
+}
+
