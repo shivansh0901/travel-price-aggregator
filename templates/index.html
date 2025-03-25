@@ -22,9 +22,18 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/search">Search</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Login</a>
-                    </li>
+                    {% if 'user' in session %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/profile">Profile</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/login">Login</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -32,7 +41,11 @@
 
     <div class="container mt-4">
         <div class="hero-section text-center">
-            <h1>Find the Best Travel Deals</h1>
+            {% if 'user' in session %}
+                <h1>Welcome back, {{ session['user']['name'] }}!</h1>
+            {% else %}
+                <h1>Find the Best Travel Deals</h1>
+            {% endif %}
             <p>Compare flight and hotel prices across multiple platforms in one place.</p>
             <a href="/search" class="btn btn-primary btn-lg mt-3">Start Searching</a>
         </div>
@@ -57,10 +70,37 @@
                 </div>
             </div>
         </div>
+
+        
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    {% if 'user' in session %}
+        <script>
+            // Fetch recent searches
+            fetch('/recent_searches')
+                .then(response => response.json())
+                .then(data => {
+                    const recentSearchesDiv = document.getElementById('recent-searches');
+                    if (data.searches.length > 0) {
+                        const searchList = data.searches.map(search => `
+                            <div class="card mb-2">
+                                <div class="card-body">
+                                    <h5 class="card-title">${search.type} Search</h5>
+                                    <p class="card-text">${search.search_query}</p>
+                                    <small class="text-muted">Searched on ${new Date(search.timestamp).toLocaleString()}</small>
+                                </div>
+                            </div>
+                        `).join('');
+                        recentSearchesDiv.innerHTML = searchList;
+                    } else {
+                        recentSearchesDiv.innerHTML = '<p>No recent searches found.</p>';
+                    }
+                })
+                .catch(error => console.error('Error fetching recent searches:', error));
+        </script>
+    {% endif %}
 </body>
 </html>

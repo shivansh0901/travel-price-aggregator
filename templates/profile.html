@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Travel Price Aggregator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/">Travel Price Aggregator</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/search">Search</a></li>
+                <li class="nav-item active"><a class="nav-link" href="/profile">Profile</a></li>
+                <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="mb-4">User Profile</h1>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card profile-card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ user.name }}</h5>
+                        <h6 class="card-title">{{ user.email }}</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <h2>Recent Searches</h2>
+                {% if recent_searches %}
+                    {% for search in recent_searches %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ search.type }} Search</h5>
+                                <p class="card-text">{{ search.search_query }}</p>
+                                {% if search.type == 'Flight' %}
+                                    <p>From: {{ search.origin }} To: {{ search.destination }}</p>
+                                    <p>Date: {{ search.date }}</p>
+                                {% elif search.type == 'Hotel' %}
+                                    <p>City: {{ search.city }}</p>
+                                    <p>Check-in: {{ search.check_in }} Check-out: {{ search.check_out }}</p>
+                                {% endif %}
+                                <p class="card-text"><small class="text-muted">Searched on {{ search.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small></p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No recent searches found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

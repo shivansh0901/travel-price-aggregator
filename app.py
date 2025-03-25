@@ -2,30 +2,141 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import requests
-from config import SERPAPI_KEY, GEMINI_API_KEY
+from config import SERPAPI_KEY, GEMINI_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SECRET_KEY
 import time
 from datetime import datetime
+from authlib.integrations.flask_client import OAuth
+
 
 
 
 app = Flask(__name__)
 CORS(app)
 
-# Configurations
-app.config['SECRET_KEY'] = 'your_secret_key'
+# Configurations (Make sure to replace these with your actual values)
+app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Initialize Database
 db = SQLAlchemy(app)
 
 # User Model
 class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=True)
+    recent_searches = db.relationship('RecentSearch', backref='user', lazy=True)
 
-# Create database tables
+# Recent Searches Model
+class RecentSearch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(20), nullable=False)  # 'Flight' or 'Hotel'
+    search_query = db.Column(db.String(255), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    # Flight-specific fields
+    origin = db.Column(db.String(50), nullable=True)
+    destination = db.Column(db.String(50), nullable=True)
+    date = db.Column(db.String(50), nullable=True)
+    # Hotel-specific fields
+    city = db.Column(db.String(50), nullable=True)
+    check_in = db.Column(db.String(50), nullable=True)
+    check_out = db.Column(db.String(50), nullable=True)
+
+# Create Database Tables
 with app.app_context():
     db.create_all()
+
+'''
+# OAuth Setup
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+'''
+
+# OAuth setup
+oauth = OAuth(app)
+
+google = oauth.register(
+    name='google',
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
+'''
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=True)
+    recent_searches = db.relationship('RecentSearch', backref='user', lazy=True)
+
+class RecentSearch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(20), nullable=False)  # 'Flight' or 'Hotel'
+    search_query = db.Column(db.String(255), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    # Flight specific fields
+    origin = db.Column(db.String(50), nullable=True)
+    destination = db.Column(db.String(50), nullable=True)
+    date = db.Column(db.String(50), nullable=True)
+    # Hotel specific fields
+    city = db.Column(db.String(50), nullable=True)
+    check_in = db.Column(db.String(50), nullable=True)
+    check_out = db.Column(db.String(50), nullable=True)
+
+with app.app_context():
+    db.create_all()
+'''
+
+@app.route('/login')
+def login():
+    redirect_uri = url_for('authorized', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('index'))
+
+@app.route('/authorized')
+def authorized():
+    token = oauth.google.authorize_access_token()
+    user_info = token.get('userinfo')
+    if user_info:
+        user_email = user_info['email']
+        user_name = user_info.get('name', user_email.split('@')[0])
+        user = User.query.filter_by(email=user_email).first()
+        if not user:
+            user = User(email=user_email, name=user_name)
+            db.session.add(user)
+            db.session.commit()
+        session['user'] = user_info
+    return redirect(url_for('index'))
+
+@app.route('/profile')
+def profile():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    user_email = session['user']['email']
+    user = User.query.filter_by(email=user_email).first()
+    
+    if not user:
+        return "User not found", 404
+    
+    recent_searches = RecentSearch.query.filter_by(user_id=user.id).order_by(RecentSearch.timestamp.desc()).limit(10).all()
+    return render_template('profile.html', user=user, recent_searches=recent_searches)
+
 
 # Currency conversion rates (as of March 24, 2025)
 CURRENCY_RATES = {
@@ -47,15 +158,6 @@ def convert_currency(amount, from_currency='USD', to_currency='USD'):
     # Convert from USD to target currency
     return amount_in_usd * CURRENCY_RATES.get(to_currency, 1.0)
 
-# Google OAuth (Dummy Implementation)
-@app.route('/login')
-def login():
-    return redirect("https://accounts.google.com/o/oauth2/auth") # Dummy redirect
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
 
 # Mapping Airlines to Their Official Booking Websites
 AIRLINE_WEBSITES = {
@@ -146,6 +248,24 @@ def search_flights():
     currency = request.args.get('currency', 'USD')
     flight_class = request.args.get('class', 'Economy')
     passengers = request.args.get('passengers', '1')
+
+    # Log the search if user is logged in
+    if 'user' in session:
+        user_email = session['user']['email']
+        user = User.query.filter_by(email=user_email).first()
+        if user:
+            search_query = f"Flight from {origin} to {destination} on {outbound_date}"
+            recent_search = RecentSearch(
+                user_id=user.id,
+                type='Flight',
+                search_query=search_query,
+                timestamp=datetime.now(),
+                origin=origin,
+                destination=destination,
+                date=outbound_date
+            )
+            db.session.add(recent_search)
+            db.session.commit()
     
     # Determine if one-way or round trip
     flight_type = 1 if return_date else 2  # 1 for round trip, 2 for one way
@@ -265,6 +385,24 @@ def search_hotels():
     rooms = request.args.get('rooms', '1')
     guests = request.args.get('guests', '1')
     currency = request.args.get('currency', 'USD')
+
+    # Log the search if user is logged in
+    if 'user' in session:
+        user_email = session['user']['email']
+        user = User.query.filter_by(email=user_email).first()
+        if user:
+            search_query = f"Hotel in {city} from {check_in} to {check_out}"
+            recent_search = RecentSearch(
+                user_id=user.id,
+                type='Hotel',
+                search_query=search_query,
+                timestamp=datetime.now(),
+                city=city,
+                check_in=check_in,
+                check_out=check_out
+            )
+            db.session.add(recent_search)
+            db.session.commit()
     
     # We'll use USD for the API call and convert later
     url = "https://serpapi.com/search.json"
