@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import requests
-from config import SERPAPI_KEY, OPENAI_API_KEY, GEMINI_API_KEY
+from config import SERPAPI_KEY, GEMINI_API_KEY
 import time
 from datetime import datetime
 
@@ -379,7 +379,7 @@ def search_hotels():
         return render_template('hotel-results.html', error=error_message, city=city, check_in=check_in, check_out=check_out, selected_currency=currency, total_nights=0)
 
 
-
+'''
 # Tourist Attraction Suggestions (OpenAI API)
 @app.route('/tourist_suggestions', methods=['GET'])
 def tourist_suggestions():
@@ -411,6 +411,7 @@ def tourist_suggestions():
     except requests.exceptions.RequestException as e:
         print(f"Error calling OpenAI API: {str(e)}")  # For debugging
         return jsonify({"error": "Failed to get suggestions. Please try again later."}), 500
+'''
 
 
 
