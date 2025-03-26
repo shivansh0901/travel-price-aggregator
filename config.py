@@ -1,7 +1,5 @@
 # Store your API keys here
-SERPAPI_KEY = 'e2f5a0250605cc513f04b4359e23eae8cd3e815ce2db7066055d766d0c5858a0'
-AMADEUS_API_KEY = 'your_amadeus_api_key'
-EXCHANGE_RATE_API_KEY = 'your_exchange_rate_api_key'
+SERPAPI_KEY = '4a95c875c2178cb29367b8da76c160272e7fc25c4052c307110fdb23ba32266a'
 GEMINI_API_KEY='AIzaSyAhgmL9OKdltPx-QGiHWzVjxcAEEIPQsxY'
 GOOGLE_CLIENT_ID = "362227054318-jhq94bj1587kc20fa44s4e1784jaghgl.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
