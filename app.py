@@ -240,7 +240,8 @@ AIRLINE_WEBSITES = {
 }
 
 
-DATABASE = os.path.join(os.getcwd(), "airports.db")
+DATABASE = os.path.join(app.root_path, "airports.db")
+
 
 def get_airports(query):
     """Fetch airports matching the city name."""
@@ -592,4 +593,5 @@ def search():
     return render_template('search.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)), debug=False)
+
