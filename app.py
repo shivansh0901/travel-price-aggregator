@@ -6,7 +6,8 @@ from config import SERPAPI_KEY, GEMINI_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_
 import time
 from datetime import datetime
 from authlib.integrations.flask_client import OAuth
-
+import os
+import sqlite3
 
 
 
@@ -238,6 +239,32 @@ AIRLINE_WEBSITES = {
     "Fiji Airways": "https://www.fijiairways.com/",
 }
 
+
+DATABASE = os.path.join(os.getcwd(), "airports.db")
+
+def get_airports(query):
+    """Fetch airports matching the city name."""
+    conn = sqlite3.connect(DATABASE)  # Ensure full path is used
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "SELECT iata_code, name, city, country FROM airports WHERE city LIKE ? LIMIT 5",
+        (f"%{query}%",),
+    )
+    results = cursor.fetchall()
+    conn.close()
+
+    return [
+        {"iata": row[0], "name": row[1], "city": row[2], "country": row[3]} for row in results
+    ]
+
+@app.route("/search_airports")
+def search_airports():
+    query = request.args.get("query", "")
+    if not query:
+        return jsonify([])
+
+    return jsonify(get_airports(query))
 
 @app.route('/search_flights', methods=['GET'])
 def search_flights():

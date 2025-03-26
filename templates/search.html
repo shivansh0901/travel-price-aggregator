@@ -49,14 +49,18 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="origin">From</label>
-                                    <input type="text" class="form-control" id="origin" name="origin" placeholder="Airport code (e.g., JFK)" required>
+                                    <label for="origin_city">From</label>
+                                    <input type="text" class="form-control" id="origin_city" placeholder="Enter City Name">
+                                    <input type="hidden" id="origin" name="origin"> <!-- Stores selected airport code -->
+                                    <div id="origin_suggestions" class="suggestions-dropdown"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="destination">To</label>
-                                    <input type="text" class="form-control" id="destination" name="destination" placeholder="Airport code (e.g., LHR)" required>
+                                    <label for="destination_city">To</label>
+                                    <input type="text" class="form-control" id="destination_city" placeholder="Enter City Name">
+                                    <input type="hidden" id="destination" name="destination"> <!-- Stores selected airport code -->
+                                    <div id="destination_suggestions" class="suggestions-dropdown"></div>
                                 </div>
                             </div>
                         </div>
@@ -68,6 +72,7 @@
                                     <input type="date" class="form-control" id="date" name="date" required>
                                 </div>
                             </div>
+                            
                             
                         </div>
                         
@@ -185,6 +190,52 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+    function setupAutocomplete(inputId, hiddenInputId, dropdownId) {
+        const inputField = document.getElementById(inputId);
+        const hiddenField = document.getElementById(hiddenInputId);
+        const dropdown = document.getElementById(dropdownId);
+
+        inputField.addEventListener("input", function() {
+            const query = inputField.value.trim();
+            if (query.length < 2) {
+                dropdown.innerHTML = "";
+                return;
+            }
+
+            fetch(`/search_airports?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    dropdown.innerHTML = "";
+                    data.forEach(airport => {
+                        const option = document.createElement("div");
+                        option.classList.add("dropdown-item");
+                        option.innerHTML = `<strong>${airport.iata}</strong> - ${airport.name} (${airport.city}, ${airport.country})`;
+                        option.onclick = function() {
+                            inputField.value = `${airport.city} (${airport.iata})`;
+                            hiddenField.value = airport.iata; // Store IATA code
+                            dropdown.innerHTML = "";
+                        };
+                        dropdown.appendChild(option);
+                    });
+                });
+        });
+
+        document.addEventListener("click", function(e) {
+            if (!dropdown.contains(e.target)) {
+                dropdown.innerHTML = "";
+            }
+        });
+    }
+
+    setupAutocomplete("origin_city", "origin", "origin_suggestions");
+    setupAutocomplete("destination_city", "destination", "destination_suggestions");
+});
+
+
+    </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
